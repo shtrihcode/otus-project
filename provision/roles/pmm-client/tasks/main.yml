@@ -1,0 +1,39 @@
+---
+# tasks file for provision/roles/pmm-client
+
+- name: add percona repo
+  yum:
+    name: https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+    state: present
+
+- name: install pmm client
+  yum:
+    name: pmm2-client
+    state: present
+
+- name: check if PMM2 client is configured
+  shell: sleep 5 && pmm-admin list
+  ignore_errors: true
+  register: pmm_admin_list
+  changed_when: false
+
+- name: register node within PMM2 server
+  command: pmm-admin config --server-insecure-tls --server-url=https://admin:admin@monitoring:443 "{{ ansible_eth1.ipv4.address }}" --force
+  when: >
+        (not ansible_check_mode) and
+        (pmm_admin_list.stderr.find("pmm-agent is running, but not set up") != -1)
+
+- name: check service for adding
+  shell: "pmm-admin list | egrep -i '^mysql'"
+  args:
+    executable: /bin/bash
+  ignore_errors: true
+  register: pmm_admin_list_add
+  changed_when: false
+
+- name: add mysql service to monitoring
+  command: pmm-admin add mysql --username=icadmin --password=Passw0rd --query-source=perfschema
+  when: >
+        ( not ansible_check_mode ) and
+        ( pmm_admin_list_add.rc == 1 )
+

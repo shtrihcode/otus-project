@@ -1,0 +1,103 @@
+---
+# tasks file for provision/roles/nextcloud
+
+- name: download nextcloud archive
+  get_url:
+    url:  "{{ next_archive }}"
+    dest: /tmp/nextcloud.tar.bz2
+    checksum: "sha256:{{ next_archive }}.sha256"
+    validate_certs: false
+
+- name: unpack nextcloud archive
+  unarchive:
+    src: /tmp/nextcloud.tar.bz2
+    dest: /var/gluster/www
+    remote_src: true
+    creates: /var/gluster/www/nextcloud/occ
+
+# bug in table collres_accesscache
+- name: fix nextcloud collres_accesscache primary key
+  lineinfile:
+    path: /var/gluster/www/nextcloud/core/Migrations/Version16000Date20190207141427.php
+    regexp: "\\$table->addUniqueIndex\\(\\['user_id', 'collection_id', 'resource_type', 'resource_id'\\], 'collres_unique_user'\\);"
+    line: "$table->setPrimaryKey(['user_id', 'collection_id', 'resource_type', 'resource_id'], 'collres_unique_user');"
+
+- name: set ownership back
+  file:
+    dest: /var/gluster/www/
+    owner: nginx
+    group: nginx
+    recurse: yes
+
+- name: first setup nextcloud
+  become_user: "nginx"
+  become: yes
+  shell: >
+    php occ  maintenance:install
+    --database mysql
+    --database-host "127.0.0.1:6446"
+    --database-name nextcloud
+    --database-table-prefix oc_
+    --database-user {{ nc_db_user }}
+    --database-pass {{ nc_db_passwd }}
+    --admin-user {{ nc_admin }}
+    --admin-pass {{ nc_passwd }}
+    --data-dir /var/gluster/nc-data
+  args:
+    chdir: "{{ nc_main_dir }}"
+    creates: /var/gluster/www/nextcloud/config/config.php
+  register: setup_nc
+
+- name: set nextcloud domain config.php values
+  become_user: "nginx"
+  become: yes
+  command: php occ config:system:set {{ item.key }} {{ item.value }}
+  args:
+    chdir: "{{ nc_main_dir }}"
+  with_items: "{{ nc_config }}"
+
+- name: copy config.json to /tmp
+  copy:
+    src: "config.json"
+    dest: /tmp/nextcloud.config.json
+    owner: "nginx"
+    mode: 0600
+
+- name: set default config
+  become_user: "nginx"
+  become: yes
+  command: php occ config:import /tmp/nextcloud.config.json
+  args:
+    chdir: "{{ nc_main_dir }}"
+  register: setup_nc_config
+
+- name: set cron to run background jobs
+  become_user: "nginx"
+  become: yes
+  command: php occ background:cron
+  args:
+    chdir: "{{ nc_main_dir }}"
+
+- name: adjust app settings
+  become_user: "nginx"
+  become: yes
+  command: php occ app:{{ item.key }} {{ item.value }}
+  args:
+    chdir: "{{ nc_main_dir }}"
+  with_items: "{{ nc_app_config }}"
+
+- name: add nextcloud cronjob
+  cron:
+    name: nextcloud cronjob
+    minute: '*/15'
+    user: "nginx"
+    job: "php -f /var/gluster/www/nextcloud/cron.php > /dev/null 2>&1"
+
+- name: run nextcloud cronjob
+  become_user: "nginx"
+  become: yes
+  command: php -f /var/gluster/www/nextcloud/cron.php
+  args:
+    chdir: "{{ nc_main_dir }}"
+  when: setup_nc is changed
+

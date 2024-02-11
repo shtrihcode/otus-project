@@ -1,0 +1,120 @@
+---
+# tasks file for provision/roles/php
+
+- name: add php73 repo
+  yum_repository:
+    name: remi-php73
+    description: Remi's PHP 7.3 RPM repository for Enterprise Linux 7 - $basearch
+    mirrorlist: http://cdn.remirepo.net/enterprise/7/php73/mirror
+    gpgkey: http://rpms.remirepo.net/RPM-GPG-KEY-remi
+    gpgcheck: yes
+    enabled: 1
+
+- name: add remi safe repo
+  yum_repository:
+    name: remi-safe
+    description: Safe Remi's RPM repository for Enterprise Linux 7 - $basearch
+    mirrorlist: http://cdn.remirepo.net/enterprise/7/safe/mirror
+    gpgkey: http://rpms.remirepo.net/RPM-GPG-KEY-remi
+    gpgcheck: yes
+    enabled: 1
+
+- name: add remi repo
+  yum_repository:
+    name: remi
+    description: Remi's RPM repository for Enterprise Linux 7 - $basearch
+    mirrorlist: http://cdn.remirepo.net/enterprise/7/remi/mirror
+    gpgkey: http://rpms.remirepo.net/RPM-GPG-KEY-remi
+    gpgcheck: yes
+    enabled: 0
+
+- name: install php packages
+  yum:
+    name:
+      - php-cli
+      - php-fpm
+      - php-gd
+      - php-mysqlnd
+      - php-curl
+      - php-xml
+      - php-intl
+      - php-mbstring
+      - php-json
+      - php-bz2
+      - php-smbclient
+      - php-redis
+      - php-pecl-imagick
+      - php-common
+      - php-gmp
+      - php-imap
+      - php-ldap
+      - php-opcache
+      - php-mcrypt
+      - php-pear
+      - php-pdo
+      - php-pecl-apcu
+      - php-pecl-zip
+    state: present
+
+- name: configure php
+  copy:
+    src: "{{ item.file }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0644
+    force: true
+  with_items:
+    - { file: 'cli.php.ini',  dest: '/etc/php-cli.ini' }
+  notify: restart php-fpm
+
+- name: correct ownership /var/lib/php
+  file:
+    name: "{{ item.name }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode:  0770
+  with_items:
+    - { owner: nginx,  group: nginx, name: /var/lib/php/session }
+    - { owner: root,   group: nginx, name: /var/lib/php/wsdlcache }
+    - { owner: root,   group: nginx, name: /var/lib/php/opcache }
+
+- name: replace opcache.max_accelerated_files=4000
+  lineinfile:
+    path: /etc/php.d/10-opcache.ini
+    regexp: '^opcache.max_accelerated_files=(.*)'
+    line:   'opcache.max_accelerated_files=10000'
+    backup: true
+  notify: restart php-fpm
+
+- name: configure php
+  copy:
+    src: "{{ item.file }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0644
+    force: true
+  with_items:
+    - { file: 'fpm.php.ini',  dest: '/etc/php.ini' }
+  notify: restart php-fpm
+
+- name: configure php
+  template:
+    src: "{{ item.file }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0644
+    force: true
+  with_items:
+    - { file: 'www.conf.j2',     dest: '/etc/php-fpm.d/www.conf' }
+    - { file: 'php-fpm.conf.j2', dest: '/etc/php-fpm.conf' }
+  notify: restart php-fpm
+
+- name: enable php-fpm
+  systemd:
+    name: php-fpm
+    state: restarted
+    enabled: true
+

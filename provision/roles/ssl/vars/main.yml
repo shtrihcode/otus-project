@@ -1,0 +1,6 @@
+---
+# vars file for provision/roles/ssl
+
+haproxy_certs_dir: '/var/gluster/certs'
+haproxy_prep_dir: '/var/gluster/prep'
+

@@ -1,0 +1,33 @@
+---
+# tasks file for provision/roles/mysql
+
+- name: install PyMySQL from pip
+  pip:
+    name:
+      - PyMySQL==0.10.1
+      - cffi==1.14.3
+      - cryptography==3.2.0
+    state: present
+
+- name: create nextcloud db
+  mysql_db:
+    login_user: "{{ icluster_user }}"
+    login_password: "{{ icluster_passwd }}"
+    login_port: 6446
+    login_host: "127.0.0.1"
+    name: "nextcloud"
+    collation: utf8mb4_general_ci
+    encoding: utf8mb4
+
+- name: create nextcloud user
+  mysql_user:
+    login_user: "{{ icluster_user }}"
+    login_password: "{{ icluster_passwd }}"
+    login_port: 6446
+    login_host: "127.0.0.1"
+    name:     "{{ nc_db_user }}"
+    password: "{{ nc_db_passwd }}"
+    priv:     "nextcloud.*:ALL"
+    host: "%"
+    state: present
+

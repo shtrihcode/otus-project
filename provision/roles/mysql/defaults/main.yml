@@ -1,0 +1,10 @@
+---
+# defaults file for provision/roles/mysql
+
+nc_db_user: 'nextcloud'
+nc_db_passwd: '9hPw0XeMlsg7CXMR'
+
+icluster_user: 'icadmin'
+icluster_passwd: 'Passw0rd'
+
+mysql_root_password: 'Pf[!c2h{N?M-ejPG'

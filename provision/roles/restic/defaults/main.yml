@@ -1,0 +1,25 @@
+---
+restic_version: '0.9.5'
+
+restic_user: root
+restic_group: root
+restic_shell: "/bin/false"
+restic_home: "/var/lib/restic"
+
+restic_install_path: '/usr/local/bin'
+
+restic_initialize_repos: true
+
+restic_cron_mailto: root
+restic_cron_stdout_file: null
+restic_cron_stderr_file: null
+
+restic_sudo_command_whitelist: []
+
+restic_repos:
+  - name: nextcloud
+    url: "sftp:root@monitoring:/srv/restic-repo"
+    password: "what"
+    jobs:
+      - command: 'restic backup /var/gluster/www/nextcloud'
+        at: '0 1  * * *'

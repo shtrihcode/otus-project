@@ -1,0 +1,110 @@
+---
+- name: prepare OS
+  hosts: all
+  become: yes
+  roles:
+    - os
+    - firewalld
+
+- name: setup netdata, pmm, backup, rsyslog servers
+  hosts: monitoring
+  become: yes
+  roles:
+    - netdata-master
+    - pmm-server
+    - backup-user
+    - rsyslog-server
+
+- name: prepare InnoDB Cluster nodes
+  hosts:
+    - mysqlnode01
+    - mysqlnode02
+    - mysqlnode03
+  become: yes
+  roles:
+    - icluster-node
+    - netdata-slave
+    - pmm-client
+    - rsyslog-sender
+
+- name: prepare GlusterFS nodes
+  hosts:
+    - glusternode01
+    - glusternode02
+  become: yes
+  roles:
+    - gluster-infra
+    - gluster-setup
+    - netdata-slave
+    - rsyslog-sender
+
+- name: setup GlusterFS
+  hosts: glusternode02
+  become: yes
+  roles:
+    - gluster-run
+
+- name: setup InnoDB Cluster
+  hosts: backend01
+  become: yes
+  roles:
+    - icluster-setup
+
+- name: setup MySQL Routers
+  hosts:
+    - backend01
+    - backend02
+  become: yes
+  roles:
+    - icluster-router
+    - rsyslog-sender
+
+- name: setup backend01
+  hosts: backend01
+  become: yes
+  roles:
+    - gluster-client
+    - nginx
+    - netdata-slave
+    - backup-user
+    - restic
+    - redis
+    - php
+    - mysql
+
+- name: install nextcloud app
+  hosts: backend01
+  become: yes
+  roles:
+    - nextcloud
+
+- name: setup backend02
+  hosts: backend02
+  become: yes
+  roles:
+    - gluster-client
+    - nginx
+    - netdata-slave
+    - redis
+    - php
+
+- name: setup haproxies
+  hosts:
+    - haproxy01
+    - haproxy02
+  become: yes
+  roles:
+    - gluster-client
+    - ssl
+    - haproxy
+    - netdata-slave
+    - rsyslog-sender
+
+- name: setup keepalived
+  hosts:
+    - haproxy01
+    - haproxy02
+  become: yes
+  roles:
+    - keepalived
+

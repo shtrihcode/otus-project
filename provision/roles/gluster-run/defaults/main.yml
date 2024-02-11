@@ -1,0 +1,11 @@
+---
+# defaults file for provision/roles/gluster-run
+
+gluster_cluster_hosts:
+  - glusternode01
+  - glusternode02
+
+gluster_brick_dir: /srv/gluster/brick
+gluster_brick_vol: /srv/gluster/brick/gv0
+gluster_brick_name: gv0
+

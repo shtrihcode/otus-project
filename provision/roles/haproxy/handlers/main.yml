@@ -1,0 +1,9 @@
+---
+# handlers file for provision/roles/haproxy
+
+- name: restart haproxy
+  service:
+    name: haproxy
+    state: restarted
+    enabled: yes
+

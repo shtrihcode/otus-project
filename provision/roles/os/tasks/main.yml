@@ -1,0 +1,88 @@
+---
+# tasks file for provision/roles/os
+
+- name: install epel repo
+  yum:
+    name: epel-release
+    state: present
+
+- name: install needed packages
+  yum:
+    name:
+      - zip
+      - unzip
+      - bzip2
+      - vim-enhanced
+      - curl
+      - wget
+      - perl-File-FcntlLock
+      - ImageMagick
+      - ghostscript
+      - postfix
+      - firewalld
+      - facter
+      - git
+      - ntp
+      - tzdata
+      - policycoreutils-python
+      - python2-pip
+    state: present
+    enablerepo: epel
+
+- name: disable SELinux
+  selinux:
+    state: disabled
+
+- name: set timezone
+  timezone:
+    name: "{{ ntp_timezone }}"
+  notify: restart ntp
+
+- name: sysctl vm.overcommit_memory=1
+  sysctl:
+    name: vm.overcommit_memory
+    value: "1"
+    state: present
+    reload: true
+    sysctl_file: /etc/sysctl.conf
+
+- name: sysctl -w net.core.somaxconn=65535
+  sysctl:
+    name: net.core.somaxconn
+    value: "65535"
+    state: present
+    reload: true
+    sysctl_file: /etc/sysctl.conf
+
+- name: disable transparent hugepages - copy service file
+  copy:
+    src: disable-transparent-huge-pages.service
+    dest: '/usr/lib/systemd/system/disable-transparent-huge-pages.service'
+    owner: root
+    group: root
+    mode: 0644
+
+- name: enable service disable-transparent-hugepages
+  service:
+    name: disable-transparent-huge-pages.service
+    enabled: true
+    state: started
+
+- name: create symbolic link to /usr/bin/gs
+  file:
+    src:  /usr/bin/gs
+    dest: /usr/local/bin/gs
+    state: link
+
+- name: change ImageMagick settings
+  lineinfile:
+    path:   '/etc/ImageMagick-6/policy.xml'
+    line:   '  <policy domain="coder" rights="read|write" pattern="{{ item }}" />'
+    regexp: '(.*)<policy domain="coder" rights="(.*)" pattern="{{ item }}" />(.*)'
+    insertbefore: '</policymap>'
+  loop:
+    - PS
+    - EPI
+    - PDF
+    - XPS
+

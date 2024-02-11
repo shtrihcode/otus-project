@@ -1,0 +1,7 @@
+---
+# defaults file for provision/roles/gluster-setup
+
+gluster_cluster_hosts:
+  - glusternode01
+  - glusternode02
+

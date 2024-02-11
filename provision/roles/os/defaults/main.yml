@@ -1,0 +1,4 @@
+---
+# defaults file for provision/roles/os
+
+ntp_timezone: Europe/Moscow

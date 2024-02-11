@@ -1,0 +1,7 @@
+---
+# defaults file for provision/roles/gluster-infra
+
+gluster_brick_dir: /srv/gluster/brick
+gluster_brick_vol: /srv/gluster/brick/gv0
+gluster_brick_name: gv0
+

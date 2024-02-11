@@ -1,0 +1,7 @@
+---
+# defaults file for provision/roles/gluster-client
+
+gluster_mount_dir: /var/gluster
+gluster_brick_dir: /srv/gluster/brick
+gluster_brick_name: gv0
+

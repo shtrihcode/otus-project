@@ -1,0 +1,114 @@
+---
+# tasks file for provision/roles/nginx
+
+- name: add nginx repo
+  yum_repository:
+    name: nginx
+    description: NGINX YUM repo
+    baseurl: http://nginx.org/packages/mainline/centos/{{ ansible_distribution_major_version|int }}/$basearch/
+    gpgkey: https://nginx.org/keys/nginx_signing.key
+    gpgcheck: yes
+    enabled: 0
+
+- name: install nginx
+  yum:
+    name: nginx
+    state: present
+    enablerepo: nginx
+
+- name: create some folders
+  file:
+    name: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  with_items:
+    - { path: '/usr/local/tmp/apc',      owner: 'nginx', group: 'root', mode: '1777' }
+    - { path: '/usr/local/tmp/sessions', owner: 'nginx', group: 'root', mode: '1777' }
+    - { path: '/usr/local/tmp/cache',    owner: 'nginx', group: 'root', mode: '1777' }
+
+- name: get uid of web_user
+  user:
+    name: "nginx"
+  register: web_user_id
+
+- name: mount tmp fs
+  mount:
+    src: "tmpfs"
+    path: "{{ item }}"
+    fstype: tmpfs
+    opts: "defaults,noatime,nosuid,nodev,noexec,mode=1777"
+    passno: "0"
+    state: mounted
+  with_items:
+    - /tmp
+    - /var/tmp
+
+- name: mount tmp fs cont
+  mount:
+    src: "tmpfs"
+    path: "{{ item }}"
+    fstype: tmpfs
+    opts: "defaults,uid={{ web_user_id.uid }},size=300M,noatime,nosuid,nodev,noexec,mode=1777"
+    passno: "0"
+    state: mounted
+  with_items:
+    - /usr/local/tmp/apc
+    - /usr/local/tmp/cache
+    - /usr/local/tmp/sessions
+
+- name: create some folders
+  file:
+    name: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  with_items:
+    - { path: '/var/gluster/nc-data',    owner: 'nginx', group: 'nginx', mode: '0750' }
+    - { path: '/var/gluster/www',        owner: 'nginx', group: 'nginx', mode: '0750' }
+    - { path: '/upload_tmp',     owner: 'nginx', group: 'nginx', mode: '0755' }
+
+- name: copy nginx.conf
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: 0644
+    force: true
+  notify: restart nginx
+
+- name: copy nginx nextcloud config
+  template:
+    src: nextcloud.conf.j2
+    dest: /etc/nginx/conf.d/nextcloud.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart nginx
+
+- name: copy nginx header config
+  template:
+    src: header.conf.j2
+    dest: /etc/nginx/conf.d/header.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart nginx
+
+- name: copy other nginx config files
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/nginx/conf.d/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+    force: true
+  with_items:
+    - optimization.conf
+    - php_optimization.conf
+    - proxy.conf
+  notify: restart nginx
+

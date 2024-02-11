@@ -1,0 +1,84 @@
+---
+# tasks file for provision/roles/icluster-node
+
+- name: add MySQL repo
+  yum:
+    name: "https://repo.mysql.com/mysql80-community-release-el7-3.noarch.rpm"
+    state: present
+
+- name: delete mariadb
+  yum:
+    name: mariadb-libs
+    state: removed
+
+- name: Import a key from url
+  ansible.builtin.rpm_key:
+    state: present
+    key: https://repo.mysql.com/RPM-GPG-KEY-mysql-2023
+
+
+- name: install MySQL
+  yum:
+    name: mysql-community-server
+    enablerepo: mysql80-community
+    state: present
+
+- name: install PyMySQL from pip
+  pip:
+    name:
+      - PyMySQL==0.10.1
+      - cffi==1.14.3
+      - cryptography==3.2.0
+    state: present
+
+- name: configure mysql
+  template:
+    src: my.cnf.j2
+    dest: "/etc/my.cnf"
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart mysql
+
+- name: start and enable MySQL
+  systemd:
+    name: mysqld
+    state: restarted
+    enabled: true
+
+- name: get mysql root password
+  shell: "grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log | awk -F ' ' '{print $(NF)}'"
+  register: generated_password
+
+- name: remove temp root mysql password
+  lineinfile:
+    path: /var/log/mysqld.log
+    regexp: "temporary password"
+    state: absent
+
+- name: update mysql root password
+  command: mysql --user root --password={{ generated_password.stdout }} --connect-expired-password --execute="ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_password }}';"
+  when: generated_password.stdout
+
+- name: change mysql password policy
+  lineinfile:
+    path: /etc/my.cnf
+    regexp: '^# validate_password.policy=LOW'
+    line: 'validate_password.policy=LOW'
+
+- name: restart MySQL
+  systemd:
+    name: mysqld
+    state: restarted
+    enabled: true
+
+- name: create icadmin
+  mysql_user:
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    name:     "{{ icluster_user }}"
+    password: "{{ icluster_passwd }}"
+    priv: '*.*:ALL,GRANT'
+    host: "%"
+    state: present
+

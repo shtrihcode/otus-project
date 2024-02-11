@@ -1,0 +1,76 @@
+#---------------------------------------------------------------------
+# Global settings
+#---------------------------------------------------------------------
+global
+    log         127.0.0.1 local2     #Log configuration
+
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+    maxconn     4000
+    user        haproxy             #Haproxy running under user and group "haproxy"
+    group       haproxy
+    daemon
+    tune.ssl.default-dh-param 2048
+
+    # turn on stats unix socket
+    stats socket /var/lib/haproxy/stats
+
+    ssl-default-bind-ciphers ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:RSA+AESGCM:RSA+AES:!aNULL:!MD5:!DSS
+    ssl-default-bind-options no-sslv3
+
+#---------------------------------------------------------------------
+# common defaults that all the 'listen' and 'backend' sections will
+# use if not designated in their block
+#---------------------------------------------------------------------
+defaults
+    mode                    http
+    log                     global
+    option                  httplog
+    option                  dontlognull
+    option http-server-close
+    option forwardfor       except 127.0.0.0/8
+    option                  redispatch
+    retries                 3
+    timeout http-request    10s
+    timeout queue           1m
+    timeout connect         10s
+    timeout client          1m
+    timeout server          1m
+    timeout http-keep-alive 10s
+    timeout check           10s
+    maxconn                 3000
+
+#---------------------------------------------------------------------
+#HAProxy Monitoring Config
+#---------------------------------------------------------------------
+frontend stats
+    bind *:8080
+    stats enable
+    stats uri /stats
+    stats refresh 10s
+    stats show-legends
+    stats realm Haproxy\ Statistics
+    stats auth {{ username }}:{{ password }}    #User and Password for login to the monitoring dashboard
+    stats admin if TRUE
+
+#---------------------------------------------------------------------
+# FrontEnd Configuration
+#---------------------------------------------------------------------
+frontend nextcloud
+    bind *:80
+    bind *:443 ssl crt /var/gluster/certs/nc.example.org.pem
+    mode http
+    redirect scheme https if !{ ssl_fc }
+    default_backend nc-back
+
+#---------------------------------------------------------------------
+# BackEnd roundrobin as balance algorithm
+#---------------------------------------------------------------------
+backend nc-back
+    cookie SERVERUSED insert indirect nocache
+    balance     roundrobin
+    option forwardfor
+    option httpchk HEAD / HTTP/1.1\r\nHost:nc.example.org
+    server backend01 192.168.56.10:80 cookie backend01 check
+    server backend02 192.168.56.12:80 check
+

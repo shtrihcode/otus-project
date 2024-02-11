@@ -1,0 +1,24 @@
+---
+# tasks file for provision/roles/rsyslog-server
+
+- name: configure rsyslog listening
+  lineinfile:
+    path: /etc/rsyslog.conf
+    regexp: '^#({{ item.regexp }}.*)'
+    line: '\1'
+    backrefs: yes
+  loop:
+    - { regexp: '\$ModLoad imudp' }
+    - { regexp: '\$UDPServerRun 514' }
+  notify: restart rsyslog
+
+- name: configure rsyslog template
+  blockinfile:
+    path: /etc/rsyslog.conf
+    content: |
+      $template RemoteLogs,"/var/log/%HOSTNAME%/%PROGRAMNAME%.log"
+      *.* ?RemoteLogs
+      & stop
+    insertafter: '$UDPServerRun 514'
+  notify: restart rsyslog
+

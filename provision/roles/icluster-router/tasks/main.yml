@@ -1,0 +1,55 @@
+---
+# tasks file for provision/roles/icluster-router
+
+- name: add MySQL repo
+  yum:
+    name: "https://repo.mysql.com/mysql80-community-release-el7-3.noarch.rpm"
+    state: present
+
+- name: install mysql-community key
+  rpm_key: key=http://repo.mysql.com/RPM-GPG-KEY-mysql-2023 state=present
+
+- name: delete mariadb
+  yum:
+    name: mariadb-libs
+    state: removed
+
+- name: install MySQL Router
+  yum:
+    name: mysql-router-community
+    enablerepo: mysql80-community
+    state: present
+
+- name: install MySQL shell
+  yum:
+    name: mysql-shell
+    enablerepo: mysql80-community
+    state: present
+
+- name: add mysqlsh aliases
+  lineinfile:
+    dest: "/root/.bashrc"
+    create: yes
+    mode: 0644
+    line: 'alias check-cluster-1="mysqlsh icadmin@mysqlnode01:3306 -- cluster status"'
+    regexp: "^alias check-cluster-1="
+
+- name: add mysqlsh aliases
+  lineinfile:
+    dest: "/root/.bashrc"
+    create: yes
+    mode: 0644
+    line: 'alias check-cluster-2="mysqlsh icadmin@mysqlnode02:3306 -- cluster status"'
+    regexp: "^alias check-cluster-2="
+
+- name: bootstrap MySQL Router
+  shell: echo "Passw0rd" | mysqlrouter --bootstrap icadmin@mysqlnode01:3306 --user=mysqlrouter --conf-use-sockets --force
+  args:
+    creates: /etc/mysqlrouter/mysqlrouter.conf.bak
+
+- name: start and enable MySQL Router
+  systemd:
+    name: mysqlrouter
+    state: started
+    enabled: true
+

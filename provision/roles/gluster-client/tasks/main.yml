@@ -1,0 +1,28 @@
+---
+# tasks file for provision/roles/gluster-client
+
+- name: add gluster repo
+  yum:
+    name: centos-release-gluster
+    state: present
+
+- name: install gluster client
+  yum:
+    name:
+      - glusterfs
+      - glusterfs-fuse
+    state: present
+
+- name: create gluster mount dir
+  file:
+    name: "{{ gluster_mount_dir }}"
+    state: directory
+
+- name: mount gluster shared storage
+  mount:
+    name: "{{ gluster_mount_dir }}"
+    src: "glusternode01:/{{ gluster_brick_name }}"
+    fstype: glusterfs
+    opts: "defaults,_netdev,backupvolfile-server=glusternode02"
+    state: mounted
+

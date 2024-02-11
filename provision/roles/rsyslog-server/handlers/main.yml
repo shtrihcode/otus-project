@@ -1,0 +1,7 @@
+---
+# handlers file for provision/roles/rsyslog-server
+
+- name: "restart rsyslog"
+  systemd:
+    name: "rsyslog"
+    state: "restarted"

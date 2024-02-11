@@ -1,0 +1,37 @@
+---
+# tasks file for provision/roles/keepalived
+
+- name: install keepalived
+  yum:
+    name:
+      - psmisc
+      - keepalived
+    state: present
+
+- name: copy keepalived.conf
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+  notify: restart keepalived
+
+- name: update net.ipv4.ip_nonlocal_bind
+  sysctl:
+    name: 'net.ipv4.ip_nonlocal_bind'
+    value: '1'
+    state: present
+    reload: yes
+
+- name: update net.ipv4.ip_forward
+  sysctl:
+    name: 'net.ipv4.ip_forward'
+    value: '1'
+    state: present
+    reload: yes
+
+- name: change systemd unit files
+  copy:
+    src: "{{ item }}"
+    dest: /etc/systemd/system/
+    owner: root
+  with_fileglob:
+    - files/units/*

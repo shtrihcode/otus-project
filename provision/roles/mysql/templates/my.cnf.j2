@@ -1,0 +1,24 @@
+[mysqld]
+default-authentication-plugin=mysql_native_password
+# validate_password.policy=LOW
+# skip-name-resolve
+bind-address = 127.0.0.1
+max_connections = 200
+connect_timeout = 5
+wait_timeout = 600
+max_allowed_packet = 16M
+default_storage_engine = InnoDB
+innodb_buffer_pool_size = 256M
+innodb_buffer_pool_instances = 1
+innodb_flush_log_at_trx_commit = 2
+innodb_log_buffer_size = 32M
+innodb_max_dirty_pages_pct = 90
+innodb_file_per_table = 1
+innodb_open_files = 400
+innodb_io_capacity = 400
+innodb_flush_method = O_DIRECT
+character-set-server = utf8mb4
+collation-server = utf8mb4_general_ci
+transaction_isolation = READ-COMMITTED
+binlog_format = ROW
+

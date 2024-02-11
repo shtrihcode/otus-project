@@ -1,0 +1,3 @@
+Host monitoring
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null

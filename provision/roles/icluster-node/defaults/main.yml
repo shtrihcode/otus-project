@@ -1,0 +1,7 @@
+---
+# defaults file for provision/roles/icluster-node
+
+icluster_user: 'icadmin'
+icluster_passwd: 'Passw0rd'
+
+mysql_root_password: 'Pf[!c2h{N?M-ejPG'

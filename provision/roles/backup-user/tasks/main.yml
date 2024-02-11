@@ -1,0 +1,26 @@
+---
+# tasks file for roles/backup-user
+
+- name: set authorized key
+  authorized_key:
+    user: root
+    state: present
+    key: "{{ sshkey }}"
+  when: ansible_hostname == 'monitoring'
+
+- name: create ssh dir
+  file:
+    path: "/root/.ssh"
+    state: directory
+    owner: root
+    group: root
+  when: ansible_hostname == 'backend01'
+
+- name: copy ssh keys
+  copy: src=files/ssh/{{ item }} dest=/root/.ssh/ mode=0600 owner=root group=root
+  with_items:
+    - id_rsa
+    - id_rsa.pub
+    - config
+  when: ansible_hostname == 'backend01'
+

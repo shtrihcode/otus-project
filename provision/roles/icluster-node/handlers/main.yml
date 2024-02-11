@@ -1,0 +1,8 @@
+---
+# handlers file for provision/roles/icluster-node
+
+- name: restart mysql
+  systemd:
+    name: mysqld
+    state: restarted
+

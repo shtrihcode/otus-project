@@ -1,0 +1,61 @@
+---
+# tasks file for provision/roles/icluster-setup
+
+- name: add MySQL repo
+  yum:
+    name: "https://repo.mysql.com/mysql80-community-release-el7-3.noarch.rpm"
+    state: present
+
+- name: delete mariadb
+  yum:
+    name: mariadb-libs
+    state: removed
+
+- name: Import a key from url
+  ansible.builtin.rpm_key:
+    state: present
+    key: https://repo.mysql.com/RPM-GPG-KEY-mysql-2023
+
+- name: install MySQL shell
+  yum:
+    name: mysql-shell
+    enablerepo: mysql80-community
+    state: present
+
+- name: copy mysqlnode01.js
+  copy:
+    src: mysqlnode01.js
+    dest: /root/mysqlnode01.js
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: copy mysqlnode02.js
+  copy:
+    src: mysqlnode02.js
+    dest: /root/mysqlnode02.js
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: copy mysqlnode03.js
+  copy:
+    src: mysqlnode03.js
+    dest: /root/mysqlnode03.js
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: copy cluster.js
+  copy:
+    src: cluster.js
+    dest: /root/cluster.js
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: create cluster and add all nodes
+  command: mysqlsh --file cluster.js
+  args:
+    chdir: /root/
+    creates: /root/.mysqlsh/mysqlsh.log

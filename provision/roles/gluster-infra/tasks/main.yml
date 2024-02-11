@@ -1,0 +1,33 @@
+---
+# tasks file for provision/roles/gluster-infra
+
+- name: create a new partition /dev/sdb1
+  parted:
+    device: /dev/sdb
+    number: 1
+    state: present
+
+- name: create xfs filesystem on /dev/sdb1
+  filesystem:
+    fstype: xfs
+    dev: /dev/sdb1
+    opts: -i size=512
+
+- name: create directory
+  file:
+    path: "{{ gluster_brick_dir }}"
+    state: directory
+    recurse: yes
+
+- name: mount /dev/sdb1
+  mount:
+    path: "{{ gluster_brick_dir }}"
+    src: /dev/sdb1
+    fstype: xfs
+    state: mounted
+
+- name: create brick directory
+  file:
+    path: "{{ gluster_brick_vol }}"
+    state: directory
+

@@ -1,0 +1,22 @@
+---
+# tasks file for provision/roles/gluster-run
+
+- name: create gluster cluster
+  gluster_volume:
+        state: "present"
+        name: "{{ gluster_brick_name }}"
+        bricks: "{{ gluster_brick_vol }}"
+        cluster: "{{ gluster_cluster_hosts }}"
+        replicas: 2
+        options:
+          { performance.cache-size: '256MB',
+          performance.cache-max-file-size: '2MB',
+          performance.md-cache-timeout: '600',
+          performance.cache-invalidation: 'on',
+          network.ping-timeout: '5',
+          features.cache-invalidation-timeout: '600',
+          performance.stat-prefetch: 'on',
+          features.cache-invalidation: 'on' }
+        force: true
+  run_once: true
+

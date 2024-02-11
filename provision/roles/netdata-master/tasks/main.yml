@@ -1,0 +1,35 @@
+---
+# tasks file for provision/roles/netdata-master
+
+- name: install IUS repo
+  yum:
+    name: https://repo.ius.io/ius-release-el7.rpm
+    state: present
+
+- name: remove conficting packages
+  yum:
+    name: git
+    state: absent
+
+- name: install prerequisites packages
+  yum:
+    name: "{{ netdata_pre_reqs }}"
+    state: present
+
+- name: Download install scrip Netdata
+  get_url:
+    url: https://get.netdata.cloud/kickstart.sh
+    dest: /tmp/netdata-kickstart.sh
+    validate_certs: no
+
+- name: install netdata
+  command: "sh /tmp/netdata-kickstart.sh --no-updates --stable-channel --disable-telemetry"
+
+- name:  copy stream.conf
+  template:
+    src: stream.conf.j2
+    dest: "{{ netdata_stream_config_file }}"
+    owner: "netdata"
+    group: root
+    mode: 0644
+  notify: restart netdata

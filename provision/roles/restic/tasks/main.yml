@@ -1,0 +1,36 @@
+---
+- include: preflight.yml
+  tags:
+    - restic_install
+    - restic_configure
+
+- include: install.yml
+  become: true
+  tags:
+    - restic_install
+
+- name: Whitelist restic to run certain commands with sudo
+  template:
+    src: 'restic.sudoers.j2'
+    dest: "/etc/sudoers.d/restic-sudoers"
+    owner: root
+    group: root
+    mode: '0440'
+    validate: "visudo -cf %s"
+  when: restic_user != 'root'
+  tags:
+    - restic_configure
+
+- include: configure_repos.yml
+  with_items: '{{ restic_repos }}'
+  become: true
+  tags:
+    - restic_configure
+
+- name: add mysqlsh aliases
+  lineinfile:
+    dest: "/root/.bashrc"
+    create: yes
+    mode: 0644
+    line: 'alias restic-nextcloud="/usr/local/bin/restic-nextcloud"'
+    regexp: "^alias restic-nextcloud="

@@ -1,0 +1,14 @@
+---
+# tasks file for provision/roles/gluster-setup
+
+- name: add gluster repo
+  yum:
+    name: centos-release-gluster
+    state: present
+
+- name: install GlusterFS
+  yum:
+    name: glusterfs-server
+    state: present
+  notify: start glusterd
+

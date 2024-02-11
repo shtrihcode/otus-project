@@ -1,0 +1,13 @@
+---
+# tasks file for provision/roles/rsyslog-sender
+
+- name: configure rsyslog send crit messages
+  blockinfile:
+    path: /etc/rsyslog.conf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK: enable remote logging"
+    content: |
+      # ### begin forwarding rule ###
+      *.=warning @192.168.56.250:514
+      # ### end of the forwarding rule ###
+  notify: restart rsyslog
+

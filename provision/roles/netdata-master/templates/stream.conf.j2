@@ -1,0 +1,33 @@
+# netdata configuration for aggregating data from remote hosts
+
+# -----------------------------------------------------------------------------
+# 1. ON SLAVE NETDATA - THE ONE THAT WILL BE SENDING METRICS
+
+[stream]
+    enabled = no
+
+# -----------------------------------------------------------------------------
+# 3. PER SENDING HOST SETTINGS, ON MASTER NETDATA
+#    THIS IS OPTIONAL - YOU DON'T HAVE TO CONFIGURE IT
+
+# This section exists to give you finer control of the master settings for each
+# slave host, when the same API key is used by many netdata slaves / proxies.
+#
+# Each netdata has a unique GUID - generated the first time netdata starts.
+# You can find it at /var/lib/netdata/registry/netdata.public.unique.id
+# (at the slave).
+#
+# The host sending data will have one. If the host is not ephemeral,
+# you can give settings for each sending host here.
+
+{% for client in clients %}
+
+[{{ client.uuid }}]
+    enabled = yes
+    history = 28800
+    memory mode = save
+    health enabled = yes
+    allow from = *
+
+{% endfor %}
+

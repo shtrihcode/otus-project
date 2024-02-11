@@ -1,0 +1,45 @@
+---
+# defaults file for provision/roles/netdata-master
+
+netdata_git_repo: https://github.com/netdata/netdata.git
+netdata_source_dir: /usr/local/src/netdata
+netdata_installer: ./netdata-installer.sh
+netdata_config_file: /etc/netdata/netdata.conf
+netdata_stream_config_file: /etc/netdata/stream.conf
+netdata_pre_reqs:
+  - autoconf
+  - automake
+  - cronie
+  - curl
+  - gcc
+  - git
+  - iproute
+  - libmnl-devel
+  - libuuid-devel
+  - lm_sensors
+  - make
+  - MySQL-python
+  - nc
+  - pkgconfig
+  - python
+  - python-psycopg2
+  - PyYAML
+  - util-linux
+  - uuid
+  - uuid-devel
+  - libuv-devel
+  - zlib-devel
+  - cmake
+  - ninja-build
+netdata_stream_master_node: "monitoring:19999"
+
+clients:
+  - { name: 'backend01', uuid: '7a926756-55c0-4df4-be1b-36ab15b493f9' }
+  - { name: 'backend02', uuid: '8df789c0-652a-4282-b414-eafd5b065dd2' }
+  - { name: 'mysqlnode01', uuid: 'e5af82f6-71ad-4bcb-8880-4cdd93abff6b' }
+  - { name: 'mysqlnode02', uuid: '5df20fd7-fd71-4c65-bd9b-5d6c2e8e8547' }
+  - { name: 'mysqlnode03', uuid: '3184ac76-c467-4d50-8bd2-c6f5c7e30e78' }
+  - { name: 'glusternode01', uuid: '134237ff-8836-4f5d-9668-d8a20eb4f295' }
+  - { name: 'glusternode02', uuid: 'c5904ad8-7d76-47c7-8a70-60f9c62d94ed' }
+  - { name: 'haproxy01', uuid: '3b06311e-2726-45b7-8d11-9070e07bf957' }
+  - { name: 'haproxy02', uuid: 'b08a6c2a-dd00-42c4-ba0e-c71c16b8a9bf' }

@@ -1,0 +1,5 @@
+---
+# defaults file for provision/roles/haproxy
+port: '80'
+username: 'stat'
+password: 'statpass'

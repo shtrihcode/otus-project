@@ -1,0 +1,7 @@
+---
+# defaults file for provision/roles/keepalived
+
+interface: eth1
+virtual_router_id: 1
+virtual_ipaddress: 192.168.56.80
+

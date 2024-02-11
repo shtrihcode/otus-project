@@ -1,0 +1,9 @@
+---
+# handlers file for provision/roles/netdata-slave
+
+- name: restart netdata
+  service:
+    name: "netdata"
+    state: "restarted"
+    enabled: true
+    sleep: 10

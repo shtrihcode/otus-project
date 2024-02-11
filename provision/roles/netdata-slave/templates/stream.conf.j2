@@ -1,0 +1,27 @@
+{% for client in clients %}
+{% if client.name == ansible_hostname %}
+# netdata configuration for aggregating data from remote hosts
+#
+# API keys authorize a pair of sending-receiving netdata servers.
+# Once their communication is authorized, they can exchange metrics for any
+# number of hosts.
+#
+# You can generate API keys, with the linux command: uuidgen
+
+
+# -----------------------------------------------------------------------------
+# 1. ON SLAVE NETDATA - THE ONE THAT WILL BE SENDING METRICS
+
+[stream]
+    enabled = yes
+    destination = {{ netdata_stream_master_node }}
+    api key = {{ client.uuid }}
+    timeout seconds = 60
+    default port = 19999
+    send charts matching = *
+    buffer size bytes = 1048576
+    reconnect delay seconds = 5
+    initial clock resync iterations = 60
+
+{% endif %}
+{% endfor %}
